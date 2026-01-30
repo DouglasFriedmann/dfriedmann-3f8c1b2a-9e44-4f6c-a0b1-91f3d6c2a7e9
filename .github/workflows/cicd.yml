@@ -1,0 +1,56 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1
+      ECR_REPO: tv-devops-repo
+      STACK_NAME: tv-devops
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG ./app
+          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: iac/package-lock.json
+
+      - name: Install IaC deps
+        working-directory: iac
+        run: npm ci
+
+      - name: Deploy with CDKTF
+        working-directory: iac
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          npx -y cdktf-cli@latest deploy $STACK_NAME --auto-approve
+
