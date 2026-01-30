@@ -1,3 +1,18 @@
 node_modules/
 dist/
 .env
+# CDKTF / Terraform generated artifacts
+iac/cdktf.out/
+iac/.terraform/
+iac/.terraform.lock.hcl
+iac/terraform.*.tfstate
+iac/terraform.*.tfstate.backup
+*.tfstate
+*.tfstate.backup
+
+# Terraform plan files
+*.tfplan
+
+# OS / editor noise
+.DS_Store
+.vscode/
