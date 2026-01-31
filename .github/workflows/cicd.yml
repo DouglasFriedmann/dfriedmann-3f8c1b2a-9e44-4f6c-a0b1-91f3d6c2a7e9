@@ -41,9 +41,18 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
       - name: Install IaC deps
         working-directory: iac
         run: npm ci
+
+      - name: Generate CDKTF provider bindings
+        working-directory: iac
+        run: npx -y cdktf-cli@latest get
 
       - name: Deploy with CDKTF
         working-directory: iac
