@@ -1,4 +1,4 @@
-import { App, TerraformStack, TerraformOutput, TerraformVariable } from "cdktf";
+import { App, TerraformStack, TerraformOutput, TerraformVariable, S3Backend } from "cdktf";
 import { Construct } from "constructs";
 
 import { AwsProvider } from "./.gen/providers/aws/provider";
@@ -30,6 +30,22 @@ class TvDevopsStack extends TerraformStack {
 
     const region = process.env.AWS_REGION || "us-east-1";
     const appPort = 3000;
+    
+    const stateBucket = process.env.TF_STATE_BUCKET;
+    if (!stateBucket) {
+      throw new Error("TF_STATE_BUCKET env var is required (S3 backend bucket name).");
+    }
+
+    const lockTable = process.env.TF_LOCK_TABLE || "tv-devops-terraform-locks";
+    const stateKey = process.env.TF_STATE_KEY || "tv-devops/terraform.tfstate";
+
+    new S3Backend(this, {
+      bucket: stateBucket,
+      key: stateKey,
+      region,
+      dynamodbTable: lockTable,
+      encrypt: true,
+    });
 
     new AwsProvider(this, "aws", { region });
 
