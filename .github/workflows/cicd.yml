@@ -42,7 +42,7 @@ jobs:
         working-directory: iac
         run: npx -y cdktf-cli@latest get
 
-      - name: Deploy with CDKTF
+      - name: Deploy with CDKTF (bootstrap infra + ECR)
         working-directory: iac
         env:
           IMAGE_TAG: ${{ github.sha }} 
@@ -63,7 +63,21 @@ jobs:
       - name: Build, tag, and push image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPO: tv-devops-repo
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG ./app
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+            
+      - name: Deploy with CDKTF (update ECS to new image)
+        working-directory: iac
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          STACK_NAME: tv-devops
+          AWS_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-1
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          TF_LOCK_TABLE: tv-devops-terraform-locks
+          TF_STATE_KEY: tv-devops/terraform.tfstate
+        run: |
+          npx -y cdktf-cli@latest deploy $STACK_NAME --auto-approve
