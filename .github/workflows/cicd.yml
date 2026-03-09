@@ -3,6 +3,10 @@ name: CI/CD
 on:
   push:
     branches: ["main"]
+    paths:    
+      - 'app/**'
+      - 'iac/**'
+      - '.github/workflows/**'
 
 jobs:
   deploy:
