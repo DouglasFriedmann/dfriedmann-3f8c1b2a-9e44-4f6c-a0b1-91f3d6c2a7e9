@@ -37,16 +37,6 @@ The system is fully reproducible in any AWS account by supplying valid AWS crede
 
 ---
 
-## Prerequisites
-
-
-> IAM User github-actions-tv-devops created.
->  **Note:** For assessment simplicity, `AdministratorAccess` was given.
-> Permissions: Administrator Access, AmazonEC2ContainerRegistryPowerUser, CloudWatchLogsFullAccess
-> Find access key, secrety key, and TF_STATE_BUCKET in Github Actions Secrets.
-
----
-
 ## Terraform Remote State (One-Time Setup)
 
 Terraform state is stored remotely using:
@@ -54,26 +44,6 @@ Terraform state is stored remotely using:
 - **DynamoDB** (state locking)
 
 These are **not destroyed** during normal deploy/destroy cycles.
-
-### Create the backend resources (one time only)
-
-export AWS_REGION=us-east-1
-export AWS_DEFAULT_REGION=us-east-1
-
-export TF_STATE_BUCKET="tv-devops-terraform-state-<your-name>"
-export TF_LOCK_TABLE="tv-devops-terraform-locks"
-export TF_STATE_KEY="tv-devops/terraform.tfstate"
-
-aws s3api create-bucket \
-  --bucket "$TF_STATE_BUCKET" \
-  --region "$AWS_REGION"
-
-aws dynamodb create-table \
-  --table-name "$TF_LOCK_TABLE" \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region "$AWS_REGION"
 
 ### CI/CD Workflow
 The GitHub Actions pipeline runs on every push to main.
@@ -95,23 +65,6 @@ curl http://<alb-dns-name>/health
 
 Expected response:
 {"status":"ok"}
-
-### Destroy Infrastructure
-To destroy all AWS resources except the Terraform backend from repository root:
-
-cd iac
-
-export AWS_REGION=us-east-1
-export AWS_DEFAULT_REGION=us-east-1
-export TF_STATE_BUCKET="tv-devops-terraform-state-dockdoug"
-export TF_LOCK_TABLE="tv-devops-terraform-locks"
-export TF_STATE_KEY="tv-devops/terraform.tfstate"
-
-npx -y cdktf-cli@latest destroy tv-devops --auto-approve
-
-**Notes**
-
-The S3 bucket and DynamoDB table remain intact
 
 ### Reproducability 
 This project is fully reproducible:
