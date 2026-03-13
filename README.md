@@ -73,11 +73,3 @@ This project is fully reproducible:
 -Push to main
 -GitHub Actions deploys everything automatically
 No local Terraform state is required.
-
-### Conclusion
--No regions are hardcoded
--All credentials are externalized
--Infrastructure follows least-privilege principles *IAM permissions were broadened for assessment simplicity*
--CI/CD is fully automated and auditable
-This gives us access to 
-CI history, secrets, and workflow configurations for review.
